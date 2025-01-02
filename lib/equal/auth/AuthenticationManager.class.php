@@ -34,9 +34,9 @@ class AuthenticationManager extends Service {
     /**
      * Provide a JWT token based on given user (or current user if known) and `AUTH_SECRET_KEY`
      *
-     * @param   $user_id    identifier of the user for who a token is requested
-     * @param   $validity   validity duration in seconds
-     * @return  string      token using JWT format (https://tools.ietf.org/html/rfc7519)
+     * @param   int $user_id    identifier of the user for whom a token is requested
+     * @param   int $validity   validity duration in seconds
+     * @return  string          token using JWT format (https://tools.ietf.org/html/rfc7519)
      */
     public function token(int $user_id=0, int $validity=0, array $auth_method=[]) {
         $payload = [
@@ -44,6 +44,30 @@ class AuthenticationManager extends Service {
             'exp'   => time() + $validity,
             'amr'   => [$auth_method]
         ];
+
+        return $this->createAccessToken($payload);
+    }
+
+    /**
+     * Provide a renewed JWT token adding given validity time.
+     *
+     * @param int $validity duration in seconds
+     * @return  string
+     * @throws \Exception
+     */
+    public function renewedToken(int $validity=0) {
+        $jwt = $this->retrieveAccessToken();
+
+        if(is_null($jwt)) {
+            throw new \Exception('unable_to_retrieve_access_token');
+        }
+
+        $payload = [
+            'id'    => $jwt['id'],
+            'exp'   => time() + $validity,
+            'amr'   => $jwt['amr']
+        ];
+
         return $this->createAccessToken($payload);
     }
 
